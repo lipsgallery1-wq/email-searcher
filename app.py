@@ -693,7 +693,7 @@ class EmailSearcher:
         if results['known_emails_found']:
             logger.info(f"EMAILS CONNUS RETROUVÉS: {results['known_emails_found']}")
         
-            return results
+        return results
 
 # Instance globale du chercheur d'emails
 logger.info("🚀 Initialisation de EmailSearcher...")
