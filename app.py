@@ -16,8 +16,8 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# TIMEOUT MANAGEMENT pour Render - AGRESSIF pour éviter worker timeout
-SEARCH_TIMEOUT = 20  # 20 secondes pour éviter le timeout Render de 26s
+# TIMEOUT MANAGEMENT pour Render - ULTRA AGRESSIF pour éviter worker timeout
+SEARCH_TIMEOUT = 12  # 12 secondes MAXIMUM pour éviter le timeout Render de 26s
 search_start_time = None
 
 # Configuration des extensions ignorées (remplace config.py)
@@ -454,13 +454,20 @@ class EmailSearcher:
             filtered_links = [link for link in links if link not in excluded_links]
             
             keyword_info = f"'{keyword}'" if keyword else "TOUS"
-            logger.info(f"🔍 Vérification rapide de {min(len(filtered_links), max_check)} liens avec mot-clé {keyword_info} (après filtrage)")
+            logger.info(f"🔍 Vérification rapide de {min(len(filtered_links), min(max_check, 50))} liens avec mot-clé {keyword_info} (après filtrage)")
             
             email_pages = []
-            # Vérifier rapidement les liens
-            for i, link in enumerate(filtered_links[:max_check]):
+            # Vérifier rapidement les liens - LIMITÉ POUR RENDER
+            for i, link in enumerate(filtered_links[:min(max_check, 50)]):  # MAX 50 liens pour éviter timeout
+                # PROTECTION RENDER dans le scan rapide
+                if 'search_start_time' in globals() and search_start_time:
+                    elapsed = time.time() - search_start_time
+                    if elapsed > 8:  # Arrêt très tôt dans le scan rapide
+                        logger.warning(f"⏰ TIMEOUT dans scan rapide à {elapsed:.1f}s")
+                        break
+                
                 try:
-                    response = self.session.get(link, timeout=5)
+                    response = self.session.get(link, timeout=2)  # Timeout réduit à 2s
                     page_text = response.text.lower()
                     
                     # Vérification plus approfondie pour présence d'emails
@@ -539,10 +546,11 @@ class EmailSearcher:
         logger.info(f"🌐 Domaine de base: {base_domain}")
         
         # NOUVELLE FONCTIONNALITÉ: Pré-scan pour identifier les pages avec mot-clé et emails
-        if max_pages > 10:  # Seulement pour les scans profonds
-            email_priority_pages = self.quick_scan_for_email_pages(url, max_check=1000, excluded_links=excluded_links_set, keyword=keyword)
+        # DÉSACTIVÉ SUR RENDER pour éviter timeout
+        if max_pages > 10 and max_pages < 100:  # Seulement pour les scans moyens (pas profonds)
+            email_priority_pages = self.quick_scan_for_email_pages(url, max_check=20, excluded_links=excluded_links_set, keyword=keyword)
         else:
-            email_priority_pages = []
+            email_priority_pages = []  # Pas de pré-scan pour éviter timeout
         
         # Pages à analyser avec priorité SIMPLIFIÉE
         pages_to_scan = [url] if url not in excluded_links_set else []  # Page principale d'abord
@@ -562,7 +570,7 @@ class EmailSearcher:
             
             # PROTECTION RENDER : Vérification temps écoulé
             elapsed = time.time() - search_start_time
-            if elapsed > 15:  # Arrêt à 15 secondes pour être sûr
+            if elapsed > 10:  # Arrêt à 10 secondes pour être ULTRA sûr
                 logger.warning(f"⏰ PROTECTION RENDER : Arrêt préventif à {elapsed:.1f}s")
                 break
             
@@ -596,9 +604,9 @@ class EmailSearcher:
                 }
                 
                 for future in as_completed(future_to_url):
-                    # Vérification du timeout pendant le traitement concurrent - TRÈS AGRESSIF
+                    # Vérification du timeout pendant le traitement concurrent - ULTRA AGRESSIF
                     elapsed = time.time() - search_start_time
-                    if elapsed > 15 or check_timeout():
+                    if elapsed > 10 or check_timeout():
                         logger.warning(f"⏰ TIMEOUT ATTEINT dans ThreadPoolExecutor après {len(scanned_pages)} pages - Temps: {elapsed:.1f}s")
                         break
                     
