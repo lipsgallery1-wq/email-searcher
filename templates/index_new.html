@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Searcher - Trouvez tous les emails automatiquement</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header amélioré */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            font-size: 0.95em;
+            opacity: 0.8;
+            background: rgba(255,255,255,0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        /* Container principal */
+        .search-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            margin-bottom: 30px;
+        }
+
+        /* Formulaire de recherche */
+        .search-form {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .main-search {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 25px;
+            border-radius: 15px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .search-title {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            align-items: stretch;
+        }
+
+        .url-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .url-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .search-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Sections d'options ULTRA-CLAIRES */
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .option-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border-left: 5px solid #667eea;
+            transition: all 0.3s;
+        }
+
+        .option-section:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            margin: 0 0 20px 0;
+            color: #333;
+            font-size: 1.25em;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .option-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .option-item {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-label {
+            font-weight: 600;
+            color: #333;
+            font-size: 1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .option-input {
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .option-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .option-textarea {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            min-height: 130px;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            resize: vertical;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .option-textarea.small {
+            min-height: 90px;
+        }
+
+        .option-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .option-help {
+            color: #6c757d;
+            font-size: 0.9em;
+            line-height: 1.5;
+            padding: 10px 15px;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        /* Boutons presets améliorés */
+        .option-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .preset-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .preset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .preset-primary { background: #667eea; color: white; }
+        .preset-success { background: #28a745; color: white; }
+        .preset-info { background: #17a2b8; color: white; }
+        .preset-purple { background: #6f42c1; color: white; }
+        .preset-secondary { background: #6c757d; color: white; }
+        .preset-warning { background: #ffc107; color: #212529; }
+        .preset-orange { background: #fd7e14; color: white; }
+        .preset-danger { background: #dc3545; color: white; }
+
+        /* Contrôle de range amélioré */
+        .range-control {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .range-display {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        #maxPagesSlider {
+            flex: 1;
+            min-width: 200px;
+            height: 8px;
+            border-radius: 4px;
+            background: #e0e0e0;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        #maxPagesSlider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        #maxPagesInput {
+            width: 100px;
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        #maxPagesDisplay {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 1em;
+            min-width: 100px;
+            background: rgba(102, 126, 234, 0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+
+        /* Contrôles de textarea */
+        .textarea-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .textarea-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .textarea-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .action-warning { background: #ffc107; color: #212529; }
+        .action-info { background: #17a2b8; color: white; }
+        .action-purple { background: #6f42c1; color: white; }
+
+        .stats-display {
+            font-size: 12px;
+            color: #6c757d;
+            font-weight: 600;
+            background: rgba(108, 117, 125, 0.1);
+            padding: 6px 12px;
+            border-radius: 6px;
+        }
+
+        /* Checkbox amélioré */
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 10px;
+            border: 2px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #667eea;
+        }
+
+        .checkbox-group label {
+            font-weight: 500;
+            color: #333;
+        }
+
+        /* Section d'information améliorée */
+        .info-section {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-radius: 15px;
+            padding: 25px;
+            border-left: 5px solid #2196f3;
+        }
+
+        .info-highlight {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 20px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .info-icon {
+            font-size: 1.5em;
+        }
+
+        .info-summary {
+            cursor: pointer;
+            color: #1976d2;
+            font-weight: 600;
+            padding: 12px 0;
+            user-select: none;
+            font-size: 1.1em;
+        }
+
+        .info-summary:hover {
+            color: #0d47a1;
+        }
+
+        .info-content {
+            margin-top: 15px;
+            padding: 20px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .process-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .step-number {
+            font-size: 1.2em;
+            min-width: 35px;
+            font-weight: 700;
+        }
+
+        .step-content {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .step-content strong {
+            color: #1976d2;
+            font-size: 1em;
+            font-weight: 600;
+        }
+
+        .step-content span {
+            color: #555;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-new {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-known {
+            background: #6c757d;
+            color: white;
+        }
+
+        /* RESPONSIVE DESIGN PARFAIT */
+        @media (max-width: 1024px) {
+            .option-row {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .search-container {
+                padding: 20px;
+                border-radius: 15px;
+            }
+            
+            .main-search {
+                padding: 20px;
+            }
+            
+            .input-group {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .search-btn {
+                padding: 15px;
+                font-size: 16px;
+            }
+            
+            .options-container {
+                gap: 15px;
+            }
+            
+            .option-section {
+                padding: 20px;
+            }
+            
+            .section-title {
+                font-size: 1.1em;
+            }
+            
+            .textarea-controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 15px;
+            }
+            
+            .textarea-buttons {
+                justify-content: flex-start;
+            }
+            
+            .range-display {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+            
+            #maxPagesSlider {
+                min-width: 100%;
+            }
+            
+            #maxPagesInput {
+                width: 120px;
+                align-self: center;
+            }
+            
+            #maxPagesDisplay {
+                text-align: center;
+                min-width: auto;
+            }
+            
+            .option-buttons {
+                justify-content: center;
+            }
+            
+            .preset-btn, .action-btn {
+                flex: 1;
+                min-width: 0;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .search-container {
+                padding: 15px;
+            }
+            
+            .main-search {
+                padding: 15px;
+            }
+            
+            .option-section {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .header p {
+                font-size: 1em;
+            }
+            
+            .url-input {
+                padding: 12px 15px;
+                font-size: 16px; /* Évite le zoom sur iOS */
+            }
+            
+            .search-btn {
+                padding: 12px;
+            }
+        }
+
+        /* Loading, Results et autres styles existants... */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border-left: 5px solid #dc3545;
+            display: none;
+        }
+
+        /* Classes utilitaires */
+        .text-center { text-align: center; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-3 { margin-bottom: 1rem; }
+        .font-weight-bold { font-weight: 700; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Email Searcher</h1>
+            <p>Trouvez automatiquement tous les emails sur n'importe quel site web</p>
+            <div class="subtitle">✨ Interface optimisée mobile + Système anti-doublons intelligent</div>
+        </div>
+
+        <div class="search-container">
+            <form class="search-form" id="searchForm">
+                <!-- Section principale de recherche -->
+                <div class="main-search">
+                    <h2 class="search-title">🎯 URL à analyser</h2>
+                    <div class="input-group">
+                        <input 
+                            type="text" 
+                            id="urlInput" 
+                            class="url-input" 
+                            placeholder="Entrez l'URL du site web (ex: example.com)" 
+                            required
+                        >
+                        <button type="submit" class="search-btn" id="searchBtn">
+                            🔍 Rechercher
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Sections d'options organisées -->
+                <div class="options-container">
+                    <!-- Section 1: Paramètres de base -->
+                    <div class="option-section">
+                        <h3 class="section-title">⚙️ Paramètres de recherche</h3>
+                        <div class="section-content">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="deepScan" checked>
+                                <label for="deepScan">🔍 Scan approfondi (analyse plusieurs pages + recherche avancée)</label>
+                            </div>
+                            
+                            <div class="option-row">
+                                <div class="option-item">
+                                    <label for="customKeyword" class="option-label">🎯 Focus sur mot-clé</label>
+                                    <input 
+                                        type="text" 
+                                        id="customKeyword" 
+                                        placeholder="Ex: informations, contact, about..." 
+                                        class="option-input"
+                                    >
+                                    <div class="option-buttons">
+                                        <button type="button" onclick="setKeyword('informations')" class="preset-btn preset-primary">Informations</button>
+                                        <button type="button" onclick="setKeyword('contact')" class="preset-btn preset-success">Contact</button>
+                                        <button type="button" onclick="setKeyword('about')" class="preset-btn preset-info">About</button>
+                                        <button type="button" onclick="setKeyword('team')" class="preset-btn preset-purple">Team</button>
+                                        <button type="button" onclick="clearKeyword()" class="preset-btn preset-secondary">🌐 Tout</button>
+                                    </div>
+                                    <div class="option-help">
+                                        💡 <strong>Astuce :</strong> Laissez vide pour chercher partout, ou entrez un mot-clé pour cibler spécifiquement les pages contenant ce terme
+                                    </div>
+                                </div>
+                                
+                                <div class="option-item">
+                                    <label for="maxPages" class="option-label">📊 Limite de pages</label>
+                                    <div class="range-control">
+                                        <input type="range" id="maxPagesSlider" min="10" max="10000" value="1000" oninput="updateMaxPagesDisplay()">
+                                        <div class="range-display">
+                                            <input type="number" id="maxPagesInput" min="10" max="100000" value="1000" oninput="updateMaxPagesSlider()">
+                                            <span id="maxPagesDisplay">1000 pages</span>
+                                        </div>
+                                    </div>
+                                    <div class="option-buttons">
+                                        <button type="button" onclick="setMaxPages(50)" class="preset-btn preset-success">🚀 Rapide</button>
+                                        <button type="button" onclick="setMaxPages(500)" class="preset-btn preset-warning">⚡ Normal</button>
+                                        <button type="button" onclick="setMaxPages(2000)" class="preset-btn preset-orange">🔥 Intensif</button>
+                                        <button type="button" onclick="setMaxPages(10000)" class="preset-btn preset-danger">💣 Maximum</button>
+                                    </div>
+                                    <div class="option-help">
+                                        📊 <strong>Guide :</strong> Plus de pages = plus d'emails trouvés, mais recherche plus lente. Recommandé : 500-2000 pages
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Gestion des doublons -->
+                    <div class="option-section">
+                        <h3 class="section-title">🔄 Gestion intelligente des doublons</h3>
+                        <div class="section-content">
+                            <div class="option-item">
+                                <label for="knownEmails" class="option-label">📧 Emails déjà collectés</label>
+                                <textarea 
+                                    id="knownEmails" 
+                                    placeholder="contact@example.com&#10;info@company.fr&#10;admin@site.org&#10;...&#10;&#10;💡 Collez ici vos emails déjà trouvés pour éviter les doublons" 
+                                    class="option-textarea"
+                                ></textarea>
+                                <div class="textarea-controls">
+                                    <div class="textarea-info">
+                                        <div class="option-help">
+                                            📝 <strong>Format :</strong> Un email par ligne - Ces emails seront marqués comme "déjà connus"
+                                        </div>
+                                        <div id="emailStats" class="stats-display">0 emails dans la liste</div>
+                                    </div>
+                                    <div class="textarea-buttons">
+                                        <button type="button" onclick="cleanDuplicateEmails()" class="action-btn action-warning">🧹 Nettoyer</button>
+                                        <button type="button" onclick="sortEmails()" class="action-btn action-info">📝 Trier</button>
+                                        <button type="button" onclick="loadSampleEmails()" class="action-btn action-purple">📋 Exemple</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="option-item">
+                                <label for="excludedLinks" class="option-label">🚫 Liens à éviter</label>
+                                <textarea 
+                                    id="excludedLinks" 
+                                    placeholder="https://example.com/page1&#10;https://example.com/page2&#10;...&#10;&#10;💡 URLs déjà analysées à ignorer pour optimiser la recherche" 
+                                    class="option-textarea small"
+                                ></textarea>
+                                <div class="option-help">
+                                    🔗 <strong>Optimisation :</strong> Un lien par ligne - Ces URLs seront ignorées lors du scan pour éviter les re-analyses
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Section 3: Informations -->
+                    <div class="info-section">
+                        <div class="info-highlight">
+                            <span class="info-icon">✨</span>
+                            <div>
+                                <strong>Système anti-doublons intelligent activé !</strong><br>
+                                <span style="font-size: 0.9em; opacity: 0.8;">Identifie automatiquement les nouveaux emails vs les emails déjà connus</span>
+                            </div>
+                        </div>
+                        
+                        <details class="info-details">
+                            <summary class="info-summary">💡 Comment fonctionne le système ?</summary>
+                            <div class="info-content">
+                                <div class="process-steps">
+                                    <div class="step">
+                                        <span class="step-number">1️⃣</span>
+                                        <div class="step-content">
+                                            <strong>Préparation intelligente</strong>
+                                            <span>Vos emails sont automatiquement normalisés, dédoublonnés et triés</span>
+                                        </div>
+                                    </div>
+                                    <div class="step">
+                                        <span class="step-number">2️⃣</span>
+                                        <div class="step-content">
+                                            <strong>Recherche ciblée</strong>
+                                            <span>Scan intelligent selon votre mot-clé ou analyse complète du site</span>
+                                        </div>
+                                    </div>
+                                    <div class="step">
+                                        <span class="step-number">3️⃣</span>
+                                        <div class="step-content">
+                                            <strong>Classification automatique</strong>
+                                            <span>Chaque email trouvé est marqué <span class="badge badge-new">NOUVEAU</span> ou <span class="badge badge-known">CONNU</span></span>
+                                        </div>
+                                    </div>
+                                    <div class="step">
+                                        <span class="step-number">4️⃣</span>
+                                        <div class="step-content">
+                                            <strong>Résultats optimisés</strong>
+                                            <span>Vous voyez immédiatement quels emails ajouter à votre collection !</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p><strong>Recherche en cours...</strong></p>
+            <p style="font-size: 0.9em; color: #666; margin-top: 10px;">Analyse intelligente des pages web en cours. Cela peut prendre quelques instants selon le nombre de pages.</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="results" id="results">
+            <!-- Les résultats seront affichés ici par JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        // Fonctions pour le mot-clé personnalisé
+        function setKeyword(keyword) {
+            document.getElementById('customKeyword').value = keyword;
+        }
+
+        function clearKeyword() {
+            document.getElementById('customKeyword').value = '';
+        }
+
+        // Fonctions pour la limite de pages
+        function updateMaxPagesDisplay() {
+            const slider = document.getElementById('maxPagesSlider');
+            const input = document.getElementById('maxPagesInput');
+            const display = document.getElementById('maxPagesDisplay');
+            
+            input.value = slider.value;
+            display.textContent = slider.value + ' pages';
+        }
+
+        function updateMaxPagesSlider() {
+            const slider = document.getElementById('maxPagesSlider');
+            const input = document.getElementById('maxPagesInput');
+            const display = document.getElementById('maxPagesDisplay');
+            
+            let value = parseInt(input.value);
+            if (value < 10) value = 10;
+            if (value > 100000) value = 100000;
+            
+            input.value = value;
+            slider.value = Math.min(value, 10000); // Le slider va jusqu'à 10000
+            display.textContent = value + ' pages';
+        }
+
+        function setMaxPages(pages) {
+            const slider = document.getElementById('maxPagesSlider');
+            const input = document.getElementById('maxPagesInput');
+            const display = document.getElementById('maxPagesDisplay');
+            
+            input.value = pages;
+            slider.value = Math.min(pages, 10000);
+            display.textContent = pages + ' pages';
+        }
+
+        // Fonctions de gestion des emails
+        function loadSampleEmails() {
+            const sampleEmails = `contact@1max2piste.com
+contact@4gmoto.fr
+thomasfort71@hotmail.com
+info@acidtracks.ch
+contact@actionracingteam.com
+contact@activbike.net
+contact@ak-racing.fr
+apm-organisation@outlook.fr
+lionel@laspi-racing.com
+roulages@avenir-moto.com
+info@bikershq.ch
+info@bikersdays.com
+info@bmc-moto.com
+contact@box23.fr
+cmc@carolemotoclub.fr
+ceerta@ceerta.com
+contact@circuitdebresse.com
+contact@circuitdecroix.com
+contact@circuitdesecuyers.com
+info@circuitdubourbonnais.com
+info@circuitdagen.be
+info@circuitslfg.fr
+contact@citybikelaval.fr
+contact@cl-racing.com
+delaunay.cedric@neuf.fr
+info@cornu-moto.ch
+philippe@deradiguesschool.com
+contact@denisbouan.fr
+prez@desmo-net.com
+contact@envie2rouler.com
+management@eybis.com
+piste@ffmc2607.org
+contact@first-on-track.com
+circuit@folembray-arena.fr
+contact@grt42.com
+info@h2smoto.com
+contact@lgsevents.fr
+locrider69@gmail.com
+lppbyloiseau@gmail.com
+info@masduclos.com
+info@mertensschool.com
+mgbmoto@hotmail.fr
+motoaintrackday@gmail.com
+virginie-secretariat@racing.mca-nantes.fr
+motoclubannemasse@gmail.com
+motoclubdde34@gmail.com
+contact@circuit-pau-arnos.fr
+motoclubzonerouge@gmail.com
+motoracing05@gmail.com
+marc.wormser@free.fr
+contact@mototeam95.com
+info@motorbike-events.be
+contact@mps-organisation.fr
+mttherblinois44@gmail.com
+info@omracing.be
+moto@passionvitesse.com
+go@piste-libre.fr
+manu@pitlane-endurance.com
+pkracingdays@gmail.com
+contact@phs.team
+plfracing@outlook.fr
+nelly.voilliot@polemecanique-mc.com
+info@cbotrackdays.com
+office@promax-rennstrecke.com
+info@rehmracedays.de
+infos@riding-sensation.fr
+info@rossocorsaonline.com
+contact@rsc-trackdays.com
+info@rszmotorsport.nl
+info@schwartz-performance.fr
+contact@scx-racing.com
+slider.endurance@gmail.com
+soride.contact@gmail.com
+info@spracing.es
+racing@speer-racing.de
+contact@starteam-racing.com
+TAZRACING44@gmail.com
+jsrteam18@orange.fr
+contact@team-blats.org
+contact@teamld.fr
+contact@teamlhracing.com
+team.motorbike.racing.limoges@gmail.com
+contact@teampa13.fr
+tp55@orange.fr
+teamplayers@orange.fr
+teamracing85@hotmail.fr
+club.sla@outlook.fr
+clubtrajectoire@hotmail.fr
+teamgazzz58@gmail.com
+tortueteam@gmail.com
+tracknormandyteam@gmail.com
+info@trackdays.be
+info@trackdudes.co.uk
+ttsuperpole@gmail.com
+contact@ultimatecup.eu
+info@vaisonpiste.com
+valdeviennemoto@yahoo.fr
+secretariat@vitesse-performance.com
+contact@volkanik-endurance.org
+xtremracing.motoclub@gmail.com`;
+
+            const textarea = document.getElementById('knownEmails');
+            const currentText = textarea.value.trim();
+            
+            if (currentText) {
+                const confirmed = confirm('Voulez-vous remplacer le contenu actuel par la liste d\'emails racing d\'exemple ?\n\n(Cliquez sur "Annuler" si vous voulez garder vos emails actuels)');
+                if (!confirmed) return;
+            }
+            
+            textarea.value = sampleEmails;
+            cleanDuplicateEmails();
+            
+            alert('✅ Liste d\'emails racing chargée et nettoyée !\n\nCette liste contient des emails d\'organisateurs de courses moto et auto pour tester le système anti-doublons.');
+        }
+
+        function cleanDuplicateEmails() {
+            const textarea = document.getElementById('knownEmails');
+            const text = textarea.value.trim();
+            
+            if (!text) {
+                alert('Aucun email à nettoyer');
+                return;
+            }
+            
+            const lines = text.split('\n');
+            const emails = new Set();
+            const validEmails = [];
+            const invalidLines = [];
+            
+            lines.forEach((line, index) => {
+                const trimmed = line.trim();
+                if (!trimmed) return;
+                
+                if (trimmed.includes('@') && trimmed.includes('.')) {
+                    const email = trimmed.toLowerCase();
+                    if (!emails.has(email)) {
+                        emails.add(email);
+                        validEmails.push(email);
+                    }
+                } else {
+                    invalidLines.push(`Ligne ${index + 1}: "${trimmed}"`);
+                }
+            });
+            
+            textarea.value = validEmails.join('\n');
+            updateEmailStats(validEmails.length, lines.length - validEmails.length, invalidLines);
+            
+            const duplicatesRemoved = lines.filter(l => l.trim()).length - validEmails.length;
+            let message = `✅ Nettoyage terminé:\n`;
+            message += `• ${validEmails.length} emails uniques conservés\n`;
+            if (duplicatesRemoved > 0) {
+                message += `• ${duplicatesRemoved} doublons supprimés\n`;
+            }
+            if (invalidLines.length > 0) {
+                message += `• ${invalidLines.length} lignes invalides ignorées\n`;
+            }
+            
+            alert(message);
+        }
+
+        function sortEmails() {
+            const textarea = document.getElementById('knownEmails');
+            const text = textarea.value.trim();
+            
+            if (!text) {
+                alert('Aucun email à trier');
+                return;
+            }
+            
+            const emails = text.split('\n')
+                .map(line => line.trim())
+                .filter(line => line && line.includes('@'))
+                .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+            
+            textarea.value = emails.join('\n');
+            updateEmailStats(emails.length, 0, []);
+            
+            alert(`✅ ${emails.length} emails triés par ordre alphabétique`);
+        }
+
+        function updateEmailStats(validCount, invalidCount, invalidLines) {
+            const statsDiv = document.getElementById('emailStats');
+            let html = `📊 ${validCount} emails valides`;
+            if (invalidCount > 0) {
+                html += `, ${invalidCount} invalides`;
+            }
+            statsDiv.innerHTML = html;
+        }
+
+        // Mise à jour automatique des stats
+        document.getElementById('knownEmails').addEventListener('input', function() {
+            const text = this.value.trim();
+            if (!text) {
+                updateEmailStats(0, 0, []);
+                return;
+            }
+            
+            const lines = text.split('\n').filter(line => line.trim());
+            const validEmails = lines.filter(line => line.trim().includes('@') && line.trim().includes('.'));
+            const invalidCount = lines.length - validEmails.length;
+            
+            updateEmailStats(validEmails.length, invalidCount, []);
+        });
+
+        // Gestionnaire de formulaire principal
+        let currentResults = null;
+
+        document.getElementById('searchForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const url = document.getElementById('urlInput').value.trim();
+            const deepScan = document.getElementById('deepScan').checked;
+            const customKeyword = document.getElementById('customKeyword').value.trim();
+            const maxPages = parseInt(document.getElementById('maxPagesInput').value);
+            const knownEmailsText = document.getElementById('knownEmails').value.trim();
+            const excludedLinksText = document.getElementById('excludedLinks').value.trim();
+            
+            const knownEmails = knownEmailsText
+                .split('\n')
+                .map(email => email.trim())
+                .filter(email => email && email.includes('@'));
+            
+            const excludedLinks = excludedLinksText
+                .split('\n')
+                .map(link => link.trim())
+                .filter(link => link && (link.startsWith('http://') || link.startsWith('https://')));
+            
+            if (!url) {
+                showError('Veuillez entrer une URL valide.');
+                return;
+            }
+
+            console.log('🔍 Recherche avec:', {
+                url: url,
+                deepScan: deepScan,
+                customKeyword: customKeyword || 'PARTOUT',
+                maxPages: maxPages,
+                knownEmails: knownEmails.length + ' emails connus',
+                excludedLinks: excludedLinks.length + ' liens exclus'
+            });
+
+            showLoading(true);
+            hideError();
+            hideResults();
+
+            try {
+                const response = await fetch('/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        url: url,
+                        deep_scan: deepScan,
+                        custom_keyword: customKeyword,
+                        max_pages: maxPages,
+                        known_emails: knownEmails,
+                        excluded_links: excludedLinks
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Erreur lors de la recherche');
+                }
+
+                currentResults = data.data;
+                displayResults(currentResults);
+
+            } catch (error) {
+                showError(`Erreur: ${error.message}`);
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.getElementById('searchBtn').disabled = show;
+            document.getElementById('searchBtn').textContent = show ? '⏳ Recherche...' : '🔍 Rechercher';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function hideResults() {
+            document.getElementById('results').style.display = 'none';
+        }
+
+        function displayResults(data) {
+            // Cette fonction sera complétée avec l'affichage des résultats
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <h2>📧 Résultats de la recherche</h2>
+                <p><strong>${data.emails.length}</strong> emails trouvés sur <strong>${data.total_pages}</strong> pages analysées</p>
+                <div style="margin-top: 20px;">
+                    ${data.emails.map(email => `
+                        <div style="padding: 10px; background: #f8f9fa; margin: 5px 0; border-radius: 8px; border-left: 4px solid #667eea;">
+                            <strong>${email}</strong>
+                            <div style="font-size: 0.8em; color: #6c757d; margin-top: 5px;">
+                                📍 Trouvé sur: ${data.emails_with_sources[email] || 'Source inconnue'}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            resultsDiv.style.display = 'block';
+        }
+
+        // Auto-focus sur le champ URL
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('urlInput').focus();
+        });
+    </script>
+</body>
+</html>

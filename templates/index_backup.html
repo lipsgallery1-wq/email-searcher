@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Searcher - Recherche d'emails automatique</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .search-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .search-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .url-input {
+            flex: 1;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            transition: border-color 0.3s;
+        }
+
+        .url-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .search-btn {
+            padding: 15px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .search-btn:hover {
+            background: #5a67d8;
+        }
+
+        .search-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .options {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+
+        .search-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e8f4fd;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .search-info small {
+            color: #495057;
+            font-size: 0.9em;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .results-title {
+            font-size: 1.5em;
+            color: #333;
+        }
+
+        .results-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .stat {
+            background: #f8f9fa;
+            padding: 8px 15px;
+            border-radius: 20px;
+        }
+
+        .emails-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .email-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+
+        .email-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .email-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .email-text {
+            font-family: 'Courier New', monospace;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .email-source {
+            font-size: 0.8em;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .email-source a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .email-source a:hover {
+            text-decoration: underline;
+        }
+
+        .copy-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .copy-btn:hover {
+            background: #218838;
+        }
+
+        .export-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .export-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .export-txt {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .export-csv {
+            background: #28a745;
+            color: white;
+        }
+
+        .export-json {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #dc3545;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .pages-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 10px;
+        }
+
+        .pages-info h4 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+
+        .page-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 0.9em;
+        }
+
+        .page-item:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 768px) {
+            .input-group {
+                flex-direction: column;
+            }
+
+            .results-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+
+            .results-stats {
+                flex-wrap: wrap;
+            }
+
+            .emails-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .export-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Email Searcher</h1>
+            <p>Trouvez automatiquement tous les emails sur n'importe quel site web</p>
+        </div>
+
+        <div class="search-container">
+            <form class="search-form" id="searchForm">
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        id="urlInput" 
+                        class="url-input" 
+                        placeholder="Entrez l'URL du site web (ex: example.com)" 
+                        required
+                    >
+                    <button type="submit" class="search-btn" id="searchBtn">
+                        🔍 Rechercher
+                    </button>
+                </div>
+                
+                <div class="options">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="deepScan" checked>
+                        <label for="deepScan">Scan approfondi (analyse plusieurs pages + recherche avancée)</label>
+                    </div>
+                    
+                    <!-- NOUVEAU: Focus sur mot-clé personnalisé -->
+                    <div style="margin-top: 15px;">
+                        <label for="customKeyword" style="display: block; margin-bottom: 5px; font-weight: 500;">🎯 Focus sur mot-clé (optionnel) :</label>
+                        <input 
+                            type="text" 
+                            id="customKeyword" 
+                            placeholder="Ex: informations, contact, about, team..." 
+                            style="width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px;"
+                        >
+                        <small style="color: #6c757d; display: block; margin-top: 5px;">
+                            💡 <strong>Laissez vide</strong> pour chercher PARTOUT sur le site | 
+                            <strong>Entrez un mot</strong> pour focus uniquement sur les liens contenant ce mot
+                        </small>
+                        <div style="margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button type="button" onclick="setKeyword('informations')" style="padding: 3px 8px; background: #667eea; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                                Informations
+                            </button>
+                            <button type="button" onclick="setKeyword('contact')" style="padding: 3px 8px; background: #28a745; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                                Contact
+                            </button>
+                            <button type="button" onclick="setKeyword('about')" style="padding: 3px 8px; background: #17a2b8; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                                About
+                            </button>
+                            <button type="button" onclick="setKeyword('team')" style="padding: 3px 8px; background: #6f42c1; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                                Team
+                            </button>
+                            <button type="button" onclick="clearKeyword()" style="padding: 3px 8px; background: #6c757d; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                                ❌ Tout scanner
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- NOUVEAU: Limite de pages -->
+                    <div style="margin-top: 15px;">
+                        <label for="maxPages" style="display: block; margin-bottom: 5px; font-weight: 500;">⚙️ Limite de sous-liens à analyser :</label>
+                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <input 
+                                type="range" 
+                                id="maxPagesSlider" 
+                                min="10" 
+                                max="10000" 
+                                value="1000" 
+                                style="flex: 1; min-width: 200px;"
+                                oninput="updateMaxPagesDisplay()"
+                            >
+                            <input 
+                                type="number" 
+                                id="maxPagesInput" 
+                                min="10" 
+                                max="100000" 
+                                value="1000" 
+                                style="width: 80px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;"
+                                oninput="updateMaxPagesSlider()"
+                            >
+                            <span id="maxPagesDisplay" style="font-weight: 500; color: #667eea; min-width: 80px;">1000 pages</span>
+                        </div>
+                        <small style="color: #6c757d; display: block; margin-top: 5px;">
+                            📊 Plus de pages = plus d'emails trouvés, mais recherche plus lente
+                        </small>
+                        <div style="margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button type="button" onclick="setMaxPages(50)" style="padding: 3px 8px; background: #28a745; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                                🚀 Rapide (50)
+                            </button>
+                            <button type="button" onclick="setMaxPages(500)" style="padding: 3px 8px; background: #ffc107; color: #212529; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                                ⚡ Normal (500)
+                            </button>
+                            <button type="button" onclick="setMaxPages(2000)" style="padding: 3px 8px; background: #fd7e14; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                                🔥 Intensif (2000)
+                            </button>
+                            <button type="button" onclick="setMaxPages(10000)" style="padding: 3px 8px; background: #dc3545; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                                💣 Maximum (10000)
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- NOUVEAU: Zone emails connus -->
+                    <div style="margin-top: 15px;">
+                        <label for="knownEmails" style="display: block; margin-bottom: 5px; font-weight: 500;">📧 Emails déjà collectés (pour éviter doublons) :</label>
+                        <textarea 
+                            id="knownEmails" 
+                            placeholder="contact@example.com&#10;info@company.fr&#10;admin@site.org&#10;...&#10;&#10;💡 Collez ici vos emails déjà trouvés" 
+                            style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; min-height: 100px; font-family: monospace; font-size: 14px;"
+                        ></textarea>
+                        <div style="margin-top: 8px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <small style="color: #6c757d; flex: 1; min-width: 200px;">Un email par ligne - Ces emails seront marqués comme "déjà connus"</small>
+                            <button type="button" onclick="cleanDuplicateEmails()" style="padding: 5px 12px; background: #ffc107; color: #212529; border: none; border-radius: 5px; font-size: 12px; cursor: pointer;">
+                                🧹 Supprimer doublons
+                            </button>
+                            <button type="button" onclick="sortEmails()" style="padding: 5px 12px; background: #17a2b8; color: white; border: none; border-radius: 5px; font-size: 12px; cursor: pointer;">
+                                📝 Trier A-Z
+                            </button>
+                            <button type="button" onclick="loadSampleEmails()" style="padding: 5px 12px; background: #6f42c1; color: white; border: none; border-radius: 5px; font-size: 12px; cursor: pointer;">
+                                📋 Exemple racing
+                            </button>
+                        </div>
+                        <div id="emailStats" style="margin-top: 5px; font-size: 12px; color: #6c757d;"></div>
+                    </div>
+
+                    <!-- NOUVEAU: Zone liens exclus -->
+                    <div style="margin-top: 15px;">
+                        <label for="excludedLinks" style="display: block; margin-bottom: 5px; font-weight: 500;">🚫 Liens à éviter (déjà scannés) :</label>
+                        <textarea 
+                            id="excludedLinks" 
+                            placeholder="https://example.com/page1&#10;https://example.com/page2&#10;...&#10;&#10;💡 Liens déjà analysés à ignorer" 
+                            style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; min-height: 80px; font-family: monospace; font-size: 14px;"
+                        ></textarea>
+                        <small style="color: #6c757d;">Un lien par ligne - Ces URLs seront ignorées</small>
+                    </div>
+                    
+                    <div class="search-info">
+                        <small>✨ <strong>Nouveau système anti-doublons :</strong> Identifie les nouveaux emails vs les emails déjà connus + évite les liens déjà scannés</small>
+                        
+                        <!-- NOUVEAU: Explication du fonctionnement -->
+                        <details style="margin-top: 10px;">
+                            <summary style="cursor: pointer; color: #667eea; font-weight: 500;">💡 Comment ça marche ?</summary>
+                            <div style="margin-top: 8px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 13px;">
+                                <strong>🔄 Processus intelligent :</strong><br>
+                                1️⃣ <strong>Préparation :</strong> Vos emails déjà collectés sont normalisés et dédoublonnés<br>
+                                2️⃣ <strong>Recherche :</strong> Le bot scanne uniquement les liens "Informations" et compare chaque email trouvé<br>
+                                3️⃣ <strong>Classification :</strong> Chaque email est marqué ✨<span style="background: #28a745; color: white; padding: 1px 4px; border-radius: 2px;">NOUVEAU</span> ou 🔄<span style="background: #6c757d; color: white; padding: 1px 4px; border-radius: 2px;">CONNU</span><br>
+                                4️⃣ <strong>Résultats :</strong> Vous voyez immédiatement quels emails ajouter à votre collection !
+                            </div>
+                        </details>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Recherche en cours... Cela peut prendre quelques instants.</p>
+        </div>
+
+        <div class="error" id="error" style="display: none;"></div>
+
+        <div class="results" id="results">
+            <div class="results-header">
+                <h2 class="results-title">📧 Emails trouvés</h2>
+                <div class="results-stats">
+                    <div class="stat">
+                        <strong id="emailCount">0</strong> emails
+                    </div>
+                    <div class="stat">
+                        <strong id="pageCount">0</strong> pages analysées
+                    </div>
+                </div>
+            </div>
+
+            <div id="emailsContainer">
+                <div class="emails-grid" id="emailsGrid"></div>
+                
+                <div class="export-section">
+                    <h4>📥 Exporter les résultats</h4>
+                    
+                    <!-- NOUVEAU: Section spéciale pour les nouveaux emails -->
+                    <div id="newEmailsSection" style="display: none; margin-bottom: 15px; padding: 10px; background: #d4edda; border-radius: 8px; border-left: 4px solid #28a745;">
+                        <h5 style="margin: 0 0 8px 0; color: #155724;">✨ Nouveaux emails trouvés</h5>
+                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <span id="newEmailsCount" style="font-weight: 500; color: #155724;"></span>
+                            <button onclick="copyNewEmails()" style="padding: 6px 12px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 13px;">
+                                📋 Copier nouveaux
+                            </button>
+                            <button onclick="mergeNewEmailsToKnown()" style="padding: 6px 15px; background: #ff6b35; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: 500; box-shadow: 0 2px 4px rgba(255,107,53,0.3);">
+                                🔄 Fusionner avec mes emails
+                            </button>
+                            <button onclick="copyAllEmails()" style="padding: 6px 12px; background: #6f42c1; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 13px;">
+                                📋 Copier tous
+                            </button>
+                        </div>
+                        <div style="margin-top: 8px; font-size: 12px; color: #155724;">
+                            💡 <strong>Fusion intelligente :</strong> Les nouveaux emails seront ajoutés à votre liste existante, doublons automatiquement supprimés
+                        </div>
+                    </div>
+                    
+                    <div class="export-buttons">
+                        <button class="export-btn export-txt" onclick="exportEmails('txt')">
+                            📄 Fichier TXT
+                        </button>
+                        <button class="export-btn export-csv" onclick="exportEmails('csv')">
+                            📊 Fichier CSV
+                        </button>
+                        <button class="export-btn export-json" onclick="exportEmails('json')">
+                            📋 Fichier JSON
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pages-info" id="pagesInfo" style="display: none;">
+                    <h4>📄 Pages analysées</h4>
+                    <div id="pagesList"></div>
+                </div>
+            </div>
+
+            <div class="no-results" id="noResults" style="display: none;">
+                <h3>😔 Aucun email trouvé</h3>
+                <p>Aucune adresse email n'a été détectée sur ce site web.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Fonctions pour le mot-clé personnalisé
+        function setKeyword(keyword) {
+            document.getElementById('customKeyword').value = keyword;
+        }
+
+        function clearKeyword() {
+            document.getElementById('customKeyword').value = '';
+        }
+
+        // Fonctions pour la limite de pages
+        function updateMaxPagesDisplay() {
+            const slider = document.getElementById('maxPagesSlider');
+            const input = document.getElementById('maxPagesInput');
+            const display = document.getElementById('maxPagesDisplay');
+            
+            input.value = slider.value;
+            display.textContent = slider.value + ' pages';
+        }
+
+        function updateMaxPagesSlider() {
+            const slider = document.getElementById('maxPagesSlider');
+            const input = document.getElementById('maxPagesInput');
+            const display = document.getElementById('maxPagesDisplay');
+            
+            let value = parseInt(input.value);
+            if (value < 10) value = 10;
+            if (value > 100000) value = 100000;
+            
+            input.value = value;
+            slider.value = Math.min(value, 10000); // Le slider va jusqu'à 10000
+            display.textContent = value + ' pages';
+        }
+
+        function setMaxPages(pages) {
+            const slider = document.getElementById('maxPagesSlider');
+            const input = document.getElementById('maxPagesInput');
+            const display = document.getElementById('maxPagesDisplay');
+            
+            input.value = pages;
+            slider.value = Math.min(pages, 10000);
+            display.textContent = pages + ' pages';
+        }
+
+        function loadSampleEmails() {
+            const sampleEmails = `contact@1max2piste.com
+contact@4gmoto.fr
+thomasfort71@hotmail.com
+info@acidtracks.ch
+contact@actionracingteam.com
+contact@activbike.net
+contact@ak-racing.fr
+apm-organisation@outlook.fr
+lionel@laspi-racing.com
+roulages@avenir-moto.com
+info@bikershq.ch
+info@bikersdays.com
+info@bmc-moto.com
+contact@box23.fr
+cmc@carolemotoclub.fr
+ceerta@ceerta.com
+contact@circuitdebresse.com
+contact@circuitdecroix.com
+contact@circuitdesecuyers.com
+info@circuitdubourbonnais.com
+info@circuitdagen.be
+info@circuitslfg.fr
+contact@citybikelaval.fr
+contact@cl-racing.com
+delaunay.cedric@neuf.fr
+info@cornu-moto.ch
+philippe@deradiguesschool.com
+contact@denisbouan.fr
+prez@desmo-net.com
+contact@envie2rouler.com
+management@eybis.com
+piste@ffmc2607.org
+contact@first-on-track.com
+circuit@folembray-arena.fr
+contact@grt42.com
+info@h2smoto.com
+contact@lgsevents.fr
+locrider69@gmail.com
+lppbyloiseau@gmail.com
+info@masduclos.com
+info@mertensschool.com
+mgbmoto@hotmail.fr
+motoaintrackday@gmail.com
+virginie-secretariat@racing.mca-nantes.fr
+motoclubannemasse@gmail.com
+motoclubdde34@gmail.com
+contact@circuit-pau-arnos.fr
+motoclubzonerouge@gmail.com
+motoracing05@gmail.com
+marc.wormser@free.fr
+contact@mototeam95.com
+info@motorbike-events.be
+contact@mps-organisation.fr
+mttherblinois44@gmail.com
+info@omracing.be
+moto@passionvitesse.com
+go@piste-libre.fr
+manu@pitlane-endurance.com
+pkracingdays@gmail.com
+contact@phs.team
+plfracing@outlook.fr
+nelly.voilliot@polemecanique-mc.com
+info@cbotrackdays.com
+office@promax-rennstrecke.com
+info@rehmracedays.de
+infos@riding-sensation.fr
+info@rossocorsaonline.com
+contact@rsc-trackdays.com
+info@rszmotorsport.nl
+info@schwartz-performance.fr
+contact@scx-racing.com
+slider.endurance@gmail.com
+soride.contact@gmail.com
+info@spracing.es
+racing@speer-racing.de
+contact@starteam-racing.com
+TAZRACING44@gmail.com
+jsrteam18@orange.fr
+contact@team-blats.org
+contact@teamld.fr
+contact@teamlhracing.com
+team.motorbike.racing.limoges@gmail.com
+contact@teampa13.fr
+tp55@orange.fr
+teamplayers@orange.fr
+teamracing85@hotmail.fr
+club.sla@outlook.fr
+clubtrajectoire@hotmail.fr
+teamgazzz58@gmail.com
+tortueteam@gmail.com
+tracknormandyteam@gmail.com
+info@trackdays.be
+info@trackdudes.co.uk
+ttsuperpole@gmail.com
+contact@ultimatecup.eu
+info@vaisonpiste.com
+valdeviennemoto@yahoo.fr
+secretariat@vitesse-performance.com
+contact@volkanik-endurance.org
+xtremracing.motoclub@gmail.com
+michel@1-11.org
+info@103octanos.com
+association@106xsi.net
+f.jouan@yahoo.fr
+contact@4move.fr
+contact@4event.fr
+info@54321contact.ch
+sraviot@orange.fr
+secretariat@999motorsports.fr
+A2Jorganisation@gmail.com
+teamaab29@gmail.com
+a.bperformance-events@hotmail.fr
+ahumbert.abm@orange.fr
+ccroset@acd-motorsport.ch
+inscriptions@accespiste.fr
+acomgr@free.fr
+micka@acquarossa.com
+info@acrontum.racing
+m.pin@actua-organisation.fr
+nicolas@adrenaline-mobilite.com
+afterwork.on.track@gmail.com
+contact@ag-racing.fr
+agdpiste@gmail.com
+alain.rolland44@sfr.fr
+alfaclassicclub2.0@gmail.com
+alfacso@alfacso.com
+mail@all4track.de
+contact@almacar.fr
+alliancemotorsports@outlook.fr
+alpine63rsa@gmail.fr
+alpineclubmediterranee@gmail.com
+contact@alpinefrancilienne.fr
+contact@agc86.fr
+info@amazingdrives.net
+info@amicalepistards59.fr
+ampr35@aol.com
+vorstand@amsev.de
+a.rodriguez3@wanadoo.fr
+pascal@seakia.fr
+contact.apexhunters@gmail.com
+info@apolloracing.eu
+contact@armada-racing.fr
+alexdumitru2003@gmail.com
+eddydnzrt@gmail.com
+asa-albi@outlook.fr
+asa.circuit.du.luc@wanadoo.fr
+asadesardennes@orange.fr
+asa.jura@wanadoo.fr
+asa.lachatre@gmail.com
+jennifer@asamarseille.fr
+partnership.enquiries@williamsf1.com
+investor@libertymedia.com
+businessdevelopment@mclaren.com
+alpine.media@alpinecars.com
+contact@driftfrance.com
+ydhumez@wanadoo.fr
+asa-nmc@wanadoo.fr
+aspyc56@outlook.fr
+latelierprost@gmail.com
+gand@free.fr
+atmj.racing@proton.me
+circuit.atoc@gmail.com
+marketing@lecluseautomobiles.fr
+event@august-porsche.be
+aurigepilotage@orange.fr
+circuit@auto-access.ch
+autoasiat18@gmail.com
+autoclubducastellet@yahoo.fr
+autoplustrackday@reworldmedia.com
+trackday@dijonautoracing.fr
+autosportgp@hotmail.fr
+bruno.caron18@wanadoo.fr
+info@pascal-auto-ecole.ch
+infos@automaitrise.fr
+clubautobianchi@wanadoo.fr
+info@autocollants.net
+colmar@automobile-club.org
+contact@automobileclubdenice.com
+lemansdriver@lemans.org
+acs.lesrangiers@acs.ch
+info@automobileclub79.com
+automobileclubbeaujolais@gmail.com
+autosport.experience@laposte.net
+autopole.events@yahoo.com
+asso.autoricambi@gmail.com
+contact@autoworks-mag.net
+info@axtraracing.com
+sassan@ayari.com
+e.ducrot@thevenin-ducrot.fr
+office@masduclos.com
+befa09@wanadoo.fr
+info@belgiansontrack.be
+bfc@autoprestige.org
+contact@bdsa63.org
+bigjim76@hotmail.fr
+sortiescircuit@thejapanpower.com
+bki.circuit@gmail.com
+phortail@conteurdevitesse.com
+dijontestday@gmail.com
+contact@m-club.fr
+info@bmw-m-club.ch
+marc.boithiot@wanadoo.fr
+contact@pieces-racing.com
+bridezero.fr@gmail.com
+gmburgaud@armaturesdubocage.com
+info@chazeltechnologiecourse.com
+secretariat@camaf.fr
+camaro.academy@gmail.com
+contact@car-emotion.fr
+contact@anciennesrenault.com
+contact@car-passion-events.com
+marche.jumo@wanadoo.fr
+info@caremotion.swiss
+carlisauto@orange.fr
+cars.prestige28@orange.fr
+carsconcept67@gmail.com
+castelracingteam@yahoo.fr
+competition@caterham.fr
+contact.cavs@gmail.com
+ceerta@ceerta.com
+club.centpourcentpiste@gmail.com
+audrey.mallet@porsche-montpellier.fr
+oceane.coste@porsche-avignon.fr
+info@challenge-llcc.it
+contact@chantilly-carsprestige.com
+info@christophe-events.fr
+webmaster@circuitautopassion.com
+contact@circuit-albi.fr
+info@circuit-days.co.uk
+circuitdecatalunya@circuitcat.com
+contact@circuitdebresse.com
+infos@charade.fr
+contact@circuit-chenevieres.com
+contact@circuitclastres.com
+info@circuitdecroix.com
+welcome@circuit-dijon-prenois.com
+circuit@folembray-arena.fr
+contact@circuit-auxois-sud.fr
+sensations-rallye@live.fr
+info@ledenon.com
+info@circuitmagnycours.com
+info@circuit-mettet.be
+info@circuit-mornay.fr
+circuit-nogaro@circuit-nogaro.com
+contact@circuit-pau-arnos.fr
+sylvain.kerten@spa-francorchamps.be
+circuitdesecuyers@gmail.com
+contact@circuit-sables.com
+contact@circuitdubourbonnais.com
+commercial@circuitdubugey.com
+circuit@grandsambuc.com
+info@circuitdulaquais.com
+info@masduclos.com
+info@lesdeuxarbres.com
+contact@circuitduvar.com
+info@circuitsespaceplus.com
+info@circuitglace.com
+aspic@circuit-plaisirs.com
+info@circuitfun.be
+info@circuitodenavarra.com
+info@circuitslfg.fr
+contact@circuitsdevendee.com
+contact@citroracing-historique.org
+racing901atl.44@gmail.com`;
+
+            const textarea = document.getElementById('knownEmails');
+            const currentText = textarea.value.trim();
+            
+            if (currentText) {
+                const confirmed = confirm('Voulez-vous remplacer le contenu actuel par la liste d\'emails racing d\'exemple ?\n\n(Cliquez sur "Annuler" si vous voulez garder vos emails actuels)');
+                if (!confirmed) return;
+            }
+            
+            textarea.value = sampleEmails;
+            
+            // Automatiquement nettoyer les doublons
+            cleanDuplicateEmails();
+            
+            alert('✅ Liste d\'emails racing chargée et nettoyée !\n\nCette liste contient des emails d\'organisateurs de courses moto et auto pour tester le système anti-doublons.');
+        }
+
+        function cleanDuplicateEmails() {
+            const textarea = document.getElementById('knownEmails');
+            const text = textarea.value.trim();
+            
+            if (!text) {
+                alert('Aucun email à nettoyer');
+                return;
+            }
+            
+            // Séparer les lignes et nettoyer
+            const lines = text.split('\n');
+            const emails = new Set(); // Set supprime automatiquement les doublons
+            const validEmails = [];
+            const invalidLines = [];
+            
+            lines.forEach((line, index) => {
+                const trimmed = line.trim();
+                if (!trimmed) return; // Ignorer les lignes vides
+                
+                // Vérifier si c'est un email valide (contient @ et .)
+                if (trimmed.includes('@') && trimmed.includes('.')) {
+                    const email = trimmed.toLowerCase(); // Normaliser en minuscules
+                    if (!emails.has(email)) {
+                        emails.add(email);
+                        validEmails.push(email);
+                    }
+                } else {
+                    invalidLines.push(`Ligne ${index + 1}: "${trimmed}"`);
+                }
+            });
+            
+            // Mettre à jour le textarea
+            textarea.value = validEmails.join('\n');
+            
+            // Afficher les statistiques
+            updateEmailStats(validEmails.length, lines.length - validEmails.length, invalidLines);
+            
+            // Message de confirmation
+            const duplicatesRemoved = lines.filter(l => l.trim()).length - validEmails.length;
+            let message = `✅ Nettoyage terminé:\n`;
+            message += `• ${validEmails.length} emails uniques conservés\n`;
+            if (duplicatesRemoved > 0) {
+                message += `• ${duplicatesRemoved} doublons supprimés\n`;
+            }
+            if (invalidLines.length > 0) {
+                message += `• ${invalidLines.length} lignes invalides ignorées\n`;
+                message += `\nLignes invalides:\n${invalidLines.join('\n')}`;
+            }
+            
+            alert(message);
+        }
+
+        function sortEmails() {
+            const textarea = document.getElementById('knownEmails');
+            const text = textarea.value.trim();
+            
+            if (!text) {
+                alert('Aucun email à trier');
+                return;
+            }
+            
+            // Séparer, nettoyer et trier
+            const emails = text.split('\n')
+                .map(line => line.trim())
+                .filter(line => line && line.includes('@'))
+                .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+            
+            textarea.value = emails.join('\n');
+            updateEmailStats(emails.length, 0, []);
+            
+            alert(`✅ ${emails.length} emails triés par ordre alphabétique`);
+        }
+
+        function updateEmailStats(validCount, invalidCount, invalidLines) {
+            const statsDiv = document.getElementById('emailStats');
+            let html = `📊 ${validCount} emails valides`;
+            if (invalidCount > 0) {
+                html += `, ${invalidCount} invalides`;
+            }
+            statsDiv.innerHTML = html;
+        }
+
+        // Mise à jour automatique des stats quand on tape
+        document.getElementById('knownEmails').addEventListener('input', function() {
+            const text = this.value.trim();
+            if (!text) {
+                updateEmailStats(0, 0, []);
+                return;
+            }
+            
+            const lines = text.split('\n').filter(line => line.trim());
+            const validEmails = lines.filter(line => line.trim().includes('@') && line.trim().includes('.'));
+            const invalidCount = lines.length - validEmails.length;
+            
+            updateEmailStats(validEmails.length, invalidCount, []);
+        });
+
+        let currentResults = null;
+
+        document.getElementById('searchForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const url = document.getElementById('urlInput').value.trim();
+            const deepScan = document.getElementById('deepScan').checked;
+            
+            // NOUVEAU: Récupérer le mot-clé personnalisé et la limite de pages
+            const customKeyword = document.getElementById('customKeyword').value.trim();
+            const maxPages = parseInt(document.getElementById('maxPagesInput').value);
+            
+            // NOUVEAU: Récupérer les emails connus et liens exclus
+            const knownEmailsText = document.getElementById('knownEmails').value.trim();
+            const excludedLinksText = document.getElementById('excludedLinks').value.trim();
+            
+            // Traiter les emails connus (un par ligne)
+            const knownEmails = knownEmailsText
+                .split('\n')
+                .map(email => email.trim())
+                .filter(email => email && email.includes('@'));
+            
+            // Traiter les liens exclus (un par ligne)
+            const excludedLinks = excludedLinksText
+                .split('\n')
+                .map(link => link.trim())
+                .filter(link => link && (link.startsWith('http://') || link.startsWith('https://')));
+            
+            if (!url) {
+                showError('Veuillez entrer une URL valide.');
+                return;
+            }
+
+            console.log('🔍 Recherche avec:', {
+                url: url,
+                deepScan: deepScan,
+                customKeyword: customKeyword || 'PARTOUT',
+                maxPages: maxPages,
+                knownEmails: knownEmails.length + ' emails connus',
+                excludedLinks: excludedLinks.length + ' liens exclus'
+            });
+
+            showLoading(true);
+            hideError();
+            hideResults();
+
+            try {
+                const response = await fetch('/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        url: url,
+                        deep_scan: deepScan,
+                        custom_keyword: customKeyword,  // NOUVEAU
+                        max_pages: maxPages,           // NOUVEAU
+                        known_emails: knownEmails,    
+                        excluded_links: excludedLinks 
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Erreur lors de la recherche');
+                }
+
+                currentResults = data.data;
+                displayResults(currentResults);
+
+            } catch (error) {
+                showError(`Erreur: ${error.message}`);
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.getElementById('searchBtn').disabled = show;
+            document.getElementById('searchBtn').textContent = show ? '⏳ Recherche...' : '🔍 Rechercher';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function hideResults() {
+            document.getElementById('results').style.display = 'none';
+            // CORRECTION: Cacher la section des nouveaux emails aussi
+            document.getElementById('newEmailsSection').style.display = 'none';
+        }
+
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+            const emailsGrid = document.getElementById('emailsGrid');
+            const noResultsDiv = document.getElementById('noResults');
+            const emailsContainer = document.getElementById('emailsContainer');
+            
+            // Mettre à jour les statistiques avec anti-doublons
+            const totalEmails = data.emails.length;
+            const newEmails = data.new_emails ? data.new_emails.length : totalEmails;
+            const knownEmails = data.known_emails_found ? data.known_emails_found.length : 0;
+            
+            // CORRECTION: Mettre à jour les statistiques APRÈS avoir défini le HTML complet
+            // Ajouter les nouvelles statistiques avec explications
+            let statsHtml = `<div class="stat"><strong id="emailCount">${totalEmails}</strong> emails total</div>`;
+            if (data.new_emails && data.known_emails_found) {
+                statsHtml += `<div class="stat" style="color: #28a745;"><strong>${newEmails}</strong> ✨ nouveaux</div>`;
+                if (knownEmails > 0) {
+                    statsHtml += `<div class="stat" style="color: #6c757d;"><strong>${knownEmails}</strong> 🔄 déjà connus</div>`;
+                }
+                
+                // Ajouter un message explicatif
+                if (newEmails > 0) {
+                    statsHtml += `<div class="stat" style="background: #d4edda; color: #155724; font-size: 11px; padding: 4px 8px;">📌 ${newEmails} à ajouter à votre collection !</div>`;
+                }
+            }
+            statsHtml += `<div class="stat"><strong id="pageCount">${data.total_pages}</strong> pages</div>`;
+            
+            // Maintenant on peut mettre à jour le HTML sans risque
+            document.querySelector('.results-stats').innerHTML = statsHtml;
+
+            if (data.emails.length === 0) {
+                emailsContainer.style.display = 'none';
+                noResultsDiv.style.display = 'block';
+            } else {
+                emailsContainer.style.display = 'block';
+                noResultsDiv.style.display = 'none';
+                
+                // Afficher la section des nouveaux emails si applicable
+                if (data.new_emails && data.new_emails.length > 0) {
+                    const newEmailsSection = document.getElementById('newEmailsSection');
+                    const newEmailsCount = document.getElementById('newEmailsCount');
+                    if (newEmailsSection && newEmailsCount) {
+                        newEmailsSection.style.display = 'block';
+                        newEmailsCount.textContent = `${data.new_emails.length} nouveaux emails à ajouter à votre collection`;
+                    }
+                } else {
+                    // S'assurer que la section est cachée s'il n'y a pas de nouveaux emails
+                    const newEmailsSection = document.getElementById('newEmailsSection');
+                    if (newEmailsSection) {
+                        newEmailsSection.style.display = 'none';
+                    }
+                }
+
+                // Afficher les emails avec distinction nouveau/connu
+                emailsGrid.innerHTML = '';
+                data.emails.forEach(email => {
+                    const emailItem = document.createElement('div');
+                    emailItem.className = 'email-item';
+                    
+                    // Déterminer si c'est un nouvel email ou connu
+                    const isNew = data.new_emails && data.new_emails.includes(email);
+                    const isKnown = data.known_emails_found && data.known_emails_found.includes(email);
+                    
+                    let statusBadge = '';
+                    if (isNew) {
+                        statusBadge = '<span style="background: #28a745; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-left: 8px;">✨ NOUVEAU</span>';
+                    } else if (isKnown) {
+                        statusBadge = '<span style="background: #6c757d; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-left: 8px;">🔄 CONNU</span>';
+                    }
+                    
+                    const source = data.emails_with_sources && data.emails_with_sources[email] ? data.emails_with_sources[email] : 'Source inconnue';
+                    emailItem.innerHTML = `
+                        <div class="email-content">
+                            <span class="email-text">${email}${statusBadge}</span>
+                            <div class="email-source">📍 Trouvé sur: <a href="${source}" target="_blank" rel="noopener" title="${source}">${source.length > 50 ? source.substring(0, 50) + '...' : source}</a></div>
+                        </div>
+                        <button class="copy-btn" onclick="copyEmail('${email}')">📋 Copier</button>
+                    `;
+                    emailsGrid.appendChild(emailItem);
+                });
+
+                // Afficher les informations sur les pages
+                if (data.pages_scanned.length > 1) {
+                    displayPagesInfo(data.pages_scanned);
+                }
+                
+                // NOUVEAU: Afficher les statistiques détaillées
+                if (data.links_by_status) {
+                    displayLinkStats(data.links_by_status);
+                }
+            }
+
+            resultsDiv.style.display = 'block';
+        }
+
+        function displayPagesInfo(pages) {
+            const pagesInfo = document.getElementById('pagesInfo');
+            const pagesList = document.getElementById('pagesList');
+            
+            pagesList.innerHTML = '';
+            pages.forEach(page => {
+                const pageItem = document.createElement('div');
+                pageItem.className = 'page-item';
+                
+                let statusInfo = '';
+                if (page.new_emails && page.known_emails) {
+                    statusInfo = ` (${page.new_emails.length} nouveaux, ${page.known_emails.length} connus)`;
+                }
+                
+                pageItem.innerHTML = `
+                    <strong>${page.url}</strong> - ${page.emails_found} email(s) trouvé(s)${statusInfo}
+                `;
+                pagesList.appendChild(pageItem);
+            });
+            
+            pagesInfo.style.display = 'block';
+        }
+
+        function displayLinkStats(linkStats) {
+            // Créer ou mettre à jour une section de statistiques des liens
+            let linkStatsDiv = document.getElementById('linkStats');
+            if (!linkStatsDiv) {
+                linkStatsDiv = document.createElement('div');
+                linkStatsDiv.id = 'linkStats';
+                linkStatsDiv.style.cssText = 'margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea;';
+                document.getElementById('results').appendChild(linkStatsDiv);
+            }
+            
+            linkStatsDiv.innerHTML = `
+                <h4 style="margin-bottom: 10px; color: #333;">📊 Statistiques de recherche</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                    <div>✅ <strong>${linkStats.with_emails.length}</strong> liens avec emails</div>
+                    <div>❌ <strong>${linkStats.without_emails.length}</strong> liens sans emails</div>
+                    <div>🚫 <strong>${linkStats.excluded.length}</strong> liens exclus</div>
+                    <div>⚠️ <strong>${linkStats.error.length}</strong> liens en erreur</div>
+                </div>
+            `;
+        }
+
+        function mergeNewEmailsToKnown() {
+            if (!currentResults || !currentResults.new_emails || currentResults.new_emails.length === 0) {
+                alert('❌ Aucun nouvel email à fusionner');
+                return;
+            }
+            
+            const knownEmailsTextarea = document.getElementById('knownEmails');
+            const currentEmails = knownEmailsTextarea.value.trim();
+            const newEmails = currentResults.new_emails;
+            
+            // Créer un Set pour éviter les doublons automatiquement
+            const allEmailsSet = new Set();
+            
+            // Ajouter les emails existants (normalisés en minuscules)
+            if (currentEmails) {
+                currentEmails.split('\n')
+                    .map(email => email.trim().toLowerCase())
+                    .filter(email => email && email.includes('@'))
+                    .forEach(email => allEmailsSet.add(email));
+            }
+            
+            // Ajouter les nouveaux emails
+            const addedEmails = [];
+            newEmails.forEach(email => {
+                const normalizedEmail = email.trim().toLowerCase();
+                if (!allEmailsSet.has(normalizedEmail)) {
+                    allEmailsSet.add(normalizedEmail);
+                    addedEmails.push(normalizedEmail);
+                }
+            });
+            
+            // Convertir le Set en array trié
+            const finalEmails = Array.from(allEmailsSet).sort();
+            
+            // Mettre à jour le textarea
+            knownEmailsTextarea.value = finalEmails.join('\n');
+            
+            // Mettre à jour les statistiques
+            updateEmailStats(finalEmails.length, 0, []);
+            
+            // Message de confirmation avec détails
+            if (addedEmails.length > 0) {
+                alert(`🎉 FUSION RÉUSSIE !\n\n✅ ${addedEmails.length} nouveaux emails ajoutés\n📊 Total dans votre collection : ${finalEmails.length} emails\n🧹 Doublons automatiquement supprimés\n📝 Liste triée alphabétiquement\n\n${addedEmails.length > 5 ? `Premiers ajouts : ${addedEmails.slice(0, 5).join(', ')}...` : `Ajouts : ${addedEmails.join(', ')}`}`);
+            } else {
+                alert(`ℹ️ FUSION TERMINÉE\n\nTous les emails trouvés étaient déjà dans votre collection.\n📊 Total : ${finalEmails.length} emails`);
+            }
+            
+            // Optionnel : faire défiler vers le textarea pour voir le résultat
+            knownEmailsTextarea.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function copyAllEmails() {
+            if (!currentResults || !currentResults.emails || currentResults.emails.length === 0) {
+                alert('❌ Aucun email à copier');
+                return;
+            }
+            
+            const allEmails = currentResults.emails.join('\n');
+            navigator.clipboard.writeText(allEmails).then(() => {
+                alert(`✅ ${currentResults.emails.length} emails (tous) copiés dans le presse-papiers !`);
+            }).catch(err => {
+                console.error('Erreur lors de la copie:', err);
+                alert('❌ Erreur lors de la copie');
+            });
+        }
+
+        function copyNewEmails() {
+            if (!currentResults || !currentResults.new_emails || currentResults.new_emails.length === 0) {
+                alert('Aucun nouvel email à copier');
+                return;
+            }
+            
+            const newEmails = currentResults.new_emails.join('\n');
+            navigator.clipboard.writeText(newEmails).then(() => {
+                alert(`✅ ${currentResults.new_emails.length} nouveaux emails copiés dans le presse-papiers !\n\nVous pouvez maintenant les coller dans votre fichier de collection.`);
+            }).catch(err => {
+                console.error('Erreur lors de la copie:', err);
+                alert('❌ Erreur lors de la copie');
+            });
+        }
+
+        function copyEmail(email) {
+            navigator.clipboard.writeText(email).then(() => {
+                // Animation de confirmation
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copié!';
+                btn.style.background = '#28a745';
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '#28a745';
+                }, 2000);
+            }).catch(err => {
+                console.error('Erreur lors de la copie:', err);
+            });
+        }
+
+        function exportEmails(format) {
+            if (!currentResults || !currentResults.emails.length) {
+                alert('Aucun email à exporter');
+                return;
+            }
+
+            const emails = currentResults.emails;
+            const url = currentResults.url;
+            const timestamp = new Date().toISOString().split('T')[0];
+            const filename = `emails_${url.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}`;
+
+            let content, mimeType, extension;
+
+            switch (format) {
+                case 'txt':
+                    content = emails.join('\n');
+                    mimeType = 'text/plain';
+                    extension = 'txt';
+                    break;
+                
+                case 'csv':
+                    content = 'Email\n' + emails.join('\n');
+                    mimeType = 'text/csv';
+                    extension = 'csv';
+                    break;
+                
+                case 'json':
+                    content = JSON.stringify({
+                        url: url,
+                        scan_date: new Date().toISOString(),
+                        total_emails: emails.length,
+                        total_pages: currentResults.total_pages,
+                        emails: emails,
+                        pages_scanned: currentResults.pages_scanned
+                    }, null, 2);
+                    mimeType = 'application/json';
+                    extension = 'json';
+                    break;
+            }
+
+            const blob = new Blob([content], { type: mimeType });
+            const url_download = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url_download;
+            a.download = `${filename}.${extension}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url_download);
+        }
+
+        // Auto-focus sur le champ URL
+        document.getElementById('urlInput').focus();
+    </script>
+</body>
+</html>
