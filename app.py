@@ -16,8 +16,8 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# TIMEOUT MANAGEMENT pour Render
-SEARCH_TIMEOUT = 540  # 9 minutes pour laisser marge
+# TIMEOUT MANAGEMENT pour Render - AGRESSIF pour éviter worker timeout
+SEARCH_TIMEOUT = 20  # 20 secondes pour éviter le timeout Render de 26s
 search_start_time = None
 
 # Configuration des extensions ignorées (remplace config.py)
@@ -555,12 +555,18 @@ class EmailSearcher:
         logger.info(f"📋 Pages initiales à scanner: {pages_to_scan}")
         
         while (pages_to_scan or information_priority_queue) and len(scanned_pages) < max_pages:
-            # Vérification du timeout au début de chaque itération
+            # Vérification du timeout au début de chaque itération - TRÈS AGRESSIF
             if check_timeout():
                 logger.warning(f"⏰ TIMEOUT ATTEINT dans la boucle principale après {len(scanned_pages)} pages")
                 break
             
-            logger.info(f"🔄 BOUCLE OPTIMISÉE - Pages avec mot-clé: {len(information_priority_queue)}, Pages restantes: {len(pages_to_scan)}, Scannées: {len(scanned_pages)}/{max_pages}")
+            # PROTECTION RENDER : Vérification temps écoulé
+            elapsed = time.time() - search_start_time
+            if elapsed > 15:  # Arrêt à 15 secondes pour être sûr
+                logger.warning(f"⏰ PROTECTION RENDER : Arrêt préventif à {elapsed:.1f}s")
+                break
+            
+            logger.info(f"🔄 BOUCLE OPTIMISÉE - Pages avec mot-clé: {len(information_priority_queue)}, Pages restantes: {len(pages_to_scan)}, Scannées: {len(scanned_pages)}/{max_pages} - Temps: {elapsed:.1f}s")
             
             # Prioriser les liens avec mot-clé et emails
             current_batch = []
@@ -590,9 +596,10 @@ class EmailSearcher:
                 }
                 
                 for future in as_completed(future_to_url):
-                    # Vérification du timeout pendant le traitement concurrent
-                    if check_timeout():
-                        logger.warning(f"⏰ TIMEOUT ATTEINT dans ThreadPoolExecutor après {len(scanned_pages)} pages")
+                    # Vérification du timeout pendant le traitement concurrent - TRÈS AGRESSIF
+                    elapsed = time.time() - search_start_time
+                    if elapsed > 15 or check_timeout():
+                        logger.warning(f"⏰ TIMEOUT ATTEINT dans ThreadPoolExecutor après {len(scanned_pages)} pages - Temps: {elapsed:.1f}s")
                         break
                     
                     page_url = future_to_url[future]
@@ -730,6 +737,16 @@ def search_emails_endpoint():
             return jsonify({'error': 'URL requise'}), 400
         
         logger.info(f"📊 Recherche avec max_pages: {max_pages}, mot-clé: '{keyword if keyword else 'TOUS'}'")
+        
+        # PROTECTION RENDER : Vérification immédiate si timeout déjà atteint
+        import time
+        if 'search_start_time' in globals() and search_start_time and time.time() - search_start_time > SEARCH_TIMEOUT:
+            logger.warning(f"⏰ TIMEOUT IMMÉDIAT - Recherche abandonnée avant démarrage")
+            return jsonify({
+                'success': False,
+                'error': 'Timeout prédictif - recherche trop longue pour Render',
+                'timeout_reached': True
+            })
         
         results = email_searcher.search_emails(url, max_pages=max_pages, known_emails=known_emails, excluded_links=excluded_links, keyword=keyword)
         logger.info(f"✅ Résultats obtenus: {len(results.get('emails', []))} emails")
