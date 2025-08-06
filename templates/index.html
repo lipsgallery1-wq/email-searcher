@@ -1200,13 +1200,103 @@ xtremracing.motoclub@gmail.com`;
         }
 
         function displayResults(data) {
-            // Cette fonction sera complétée avec l'affichage des résultats
             const resultsDiv = document.getElementById('results');
+            
+            // Séparer les nouveaux emails et les emails connus
+            const newEmails = data.new_emails || [];
+            const knownEmails = data.known_emails_found || [];
+            const allEmails = data.emails || [];
+            
             resultsDiv.innerHTML = `
                 <h2>📧 Résultats de la recherche</h2>
-                <p><strong>${data.emails.length}</strong> emails trouvés sur <strong>${data.total_pages}</strong> pages analysées</p>
+                
+                <!-- BOUTONS DE GESTION TOUT EN HAUT -->
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                        <button onclick="mergeNewEmailsToKnown()" style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                            🔄 Merger Nouveaux → Connus
+                        </button>
+                        <button onclick="exportAllEmails()" style="background: #17a2b8; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                            📥 Exporter Tous
+                        </button>
+                        <button onclick="exportNewEmails()" style="background: #ffc107; color: #212529; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                            ✨ Exporter Nouveaux
+                        </button>
+                        <button onclick="copyAllToClipboard()" style="background: #6f42c1; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                            📋 Copier Tous
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- STATISTIQUES -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <div style="background: #d4edda; padding: 15px; border-radius: 8px; text-align: center;">
+                        <strong style="font-size: 1.5em; color: #155724;">${allEmails.length}</strong>
+                        <div style="color: #155724;">Total Emails</div>
+                    </div>
+                    <div style="background: #fff3cd; padding: 15px; border-radius: 8px; text-align: center;">
+                        <strong style="font-size: 1.5em; color: #856404;">${newEmails.length}</strong>
+                        <div style="color: #856404;">Nouveaux</div>
+                    </div>
+                    <div style="background: #cce7ff; padding: 15px; border-radius: 8px; text-align: center;">
+                        <strong style="font-size: 1.5em; color: #004085;">${knownEmails.length}</strong>
+                        <div style="color: #004085;">Connus</div>
+                    </div>
+                    <div style="background: #f8d7da; padding: 15px; border-radius: 8px; text-align: center;">
+                        <strong style="font-size: 1.5em; color: #721c24;">${data.total_pages}</strong>
+                        <div style="color: #721c24;">Pages</div>
+                    </div>
+                </div>
+                
+                <!-- SECTION NOUVEAUX EMAILS -->
+                ${newEmails.length > 0 ? `
+                <div id="newEmailsSection" style="margin-bottom: 30px;">
+                    <h3 style="color: #856404; border-bottom: 2px solid #ffc107; padding-bottom: 10px;">
+                        ✨ Nouveaux Emails (${newEmails.length})
+                    </h3>
+                    <div style="margin-top: 15px;">
+                        ${newEmails.map(email => `
+                            <div style="padding: 12px; background: #fff3cd; margin: 8px 0; border-radius: 8px; border-left: 4px solid #ffc107; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong style="color: #856404;">${email}</strong>
+                                    <div style="font-size: 0.8em; color: #6c757d; margin-top: 5px;">
+                                        📍 ${data.emails_with_sources[email] || 'Source inconnue'}
+                                    </div>
+                                </div>
+                                <span style="background: #ffc107; color: #212529; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold;">NOUVEAU</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                
+                <!-- SECTION EMAILS CONNUS -->
+                ${knownEmails.length > 0 ? `
+                <div id="knownEmailsSection" style="margin-bottom: 30px;">
+                    <h3 style="color: #004085; border-bottom: 2px solid #17a2b8; padding-bottom: 10px;">
+                        🔄 Emails Connus Retrouvés (${knownEmails.length})
+                    </h3>
+                    <div style="margin-top: 15px;">
+                        ${knownEmails.map(email => `
+                            <div style="padding: 12px; background: #cce7ff; margin: 8px 0; border-radius: 8px; border-left: 4px solid #17a2b8; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong style="color: #004085;">${email}</strong>
+                                    <div style="font-size: 0.8em; color: #6c757d; margin-top: 5px;">
+                                        📍 ${data.emails_with_sources[email] || 'Source inconnue'}
+                                    </div>
+                                </div>
+                                <span style="background: #17a2b8; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold;">CONNU</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                
+                <!-- TOUS LES EMAILS (si pas de distinction nouveau/connu) -->
+                ${newEmails.length === 0 && knownEmails.length === 0 && allEmails.length > 0 ? `
                 <div style="margin-top: 20px;">
-                    ${data.emails.map(email => `
+                    <h3>📧 Tous les Emails (${allEmails.length})</h3>
+                    ${allEmails.map(email => `
                         <div style="padding: 10px; background: #f8f9fa; margin: 5px 0; border-radius: 8px; border-left: 4px solid #667eea;">
                             <strong>${email}</strong>
                             <div style="font-size: 0.8em; color: #6c757d; margin-top: 5px;">
@@ -1215,9 +1305,96 @@ xtremracing.motoclub@gmail.com`;
                         </div>
                     `).join('')}
                 </div>
+                ` : ''}
             `;
             resultsDiv.style.display = 'block';
         }
+
+        // Variables globales pour stocker les résultats
+        // (déclaration unique)
+
+        // Fonction pour merger les nouveaux emails vers la liste des connus
+        function mergeNewEmailsToKnown() {
+            if (!currentResults || !currentResults.new_emails || currentResults.new_emails.length === 0) {
+                alert('Aucun nouvel email à merger !');
+                return;
+            }
+            
+            const confirm_merge = confirm(`Voulez-vous merger ${currentResults.new_emails.length} nouveaux emails vers la liste des emails connus ?`);
+            if (!confirm_merge) return;
+            
+            // Récupérer les emails connus existants depuis le textarea
+            const knownEmailsTextarea = document.getElementById('knownEmails');
+            const existingKnownEmails = knownEmailsTextarea.value.split('\n').filter(email => email.trim());
+            
+            // Ajouter les nouveaux emails
+            const allKnownEmails = [...existingKnownEmails, ...currentResults.new_emails];
+            knownEmailsTextarea.value = allKnownEmails.join('\n');
+            
+            // Mettre à jour les résultats
+            currentResults.known_emails_found = [...(currentResults.known_emails_found || []), ...currentResults.new_emails];
+            currentResults.new_emails = [];
+            
+            // Réafficher les résultats
+            displayResults(currentResults);
+            
+            alert(`✅ ${currentResults.known_emails_found.length} emails mergés avec succès !`);
+        }
+
+        // Fonction pour exporter tous les emails
+        function exportAllEmails() {
+            if (!currentResults || !currentResults.emails || currentResults.emails.length === 0) {
+                alert('Aucun email à exporter !');
+                return;
+            }
+            
+            const emailsText = currentResults.emails.join('\n');
+            downloadTextFile(emailsText, 'tous_emails.txt');
+        }
+
+        // Fonction pour exporter uniquement les nouveaux emails
+        function exportNewEmails() {
+            if (!currentResults || !currentResults.new_emails || currentResults.new_emails.length === 0) {
+                alert('Aucun nouvel email à exporter !');
+                return;
+            }
+            
+            const emailsText = currentResults.new_emails.join('\n');
+            downloadTextFile(emailsText, 'nouveaux_emails.txt');
+        }
+
+        // Fonction pour copier tous les emails dans le presse-papiers
+        function copyAllToClipboard() {
+            if (!currentResults || !currentResults.emails || currentResults.emails.length === 0) {
+                alert('Aucun email à copier !');
+                return;
+            }
+            
+            const emailsText = currentResults.emails.join('\n');
+            navigator.clipboard.writeText(emailsText).then(() => {
+                alert(`✅ ${currentResults.emails.length} emails copiés dans le presse-papiers !`);
+            }).catch(() => {
+                alert('❌ Erreur lors de la copie');
+            });
+        }
+
+        // Fonction utilitaire pour télécharger un fichier texte
+        function downloadTextFile(content, filename) {
+            const element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(content));
+            element.setAttribute('download', filename);
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        }
+
+        // Modifier la fonction displayResults pour stocker les résultats
+        const originalDisplayResults = displayResults;
+        displayResults = function(data) {
+            currentResults = data;
+            originalDisplayResults(data);
+        };
 
         // Auto-focus sur le champ URL
         document.addEventListener('DOMContentLoaded', function() {
